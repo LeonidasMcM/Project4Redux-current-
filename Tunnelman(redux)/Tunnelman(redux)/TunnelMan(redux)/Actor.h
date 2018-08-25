@@ -54,7 +54,7 @@ KEY_PRESS_TAB
 */
 
 class Actor : public GraphObject {
-
+	friend class StudentWorld;
 public:
 	Actor(int ID, int x, int y, Direction input, float size, int depth, StudentWorld* world) :GraphObject(ID, x, y, input, size, depth) {
 		status = true;
@@ -63,8 +63,16 @@ public:
 	}
 	bool GetStatus();
 	virtual void doSomething() = 0;
-	StudentWorld* getWorld();
+	StudentWorld* getWorld() const;
 	void setStatus(bool input);
+
+	virtual bool tooClose(Actor*);
+
+	virtual bool isBoulder() {
+		return false;
+	}
+
+	
 
 
 private:
@@ -84,22 +92,48 @@ public:
 		sonars = 0;
 		stunduration = 0;
 		gold = 0;
-		sonarstate = 0;
+		sonarstate = false;
 	};
 	int getHealth();
 	int getSquirts();
+	int getGold()
+	{
+		return gold;
+	};
+	int getSonars() {
+		return sonars;
+	}
 	void doSomething();
 	void useSonar();
+	void setHealth(int a) {
+		health = a;
+	};
 
 
-
+	void foundBarrel() {
+		barrels++;
+	};
 	int foundBarrels();
+	void foundGold() {
+		gold++;
+	}
 	
 	void squirt();
-	void dropgold();
+	void dropGold();
 
+	bool sonarStatus() {
+		return sonarstate;
+	}
 
-
+	void setStun(int a) {
+		stunduration = a;
+	};
+	void incSonars() {
+		sonars++;
+	}
+	void incWater() {
+		squirts = squirts + 5;
+	}
 private:
 	int stunduration;
 	int squirts;
@@ -107,7 +141,9 @@ private:
 	int gold;
 	int health;
 	int barrels;
-	int sonarstate;
+	bool sonarstate;
+	int sonarticks;
+
 
 
 };
@@ -115,9 +151,12 @@ private:
 
 class Earth :public Actor {
 public:
-	Earth(int x, int y, StudentWorld* world) :Actor(TID_EARTH, x, y, right, 0.25, 3, world) {};
+	Earth(int x, int y, StudentWorld* world) :Actor(TID_EARTH, x, y, right, 0.25, 3, world) {
+		visible = true;
+	};
+	bool tooClose(Actor*);
 	void doSomething() {};
-
+	bool visible;
 
 };
 
@@ -125,15 +164,18 @@ class Boulder :public Actor {
 public:
 	Boulder(int x, int y, StudentWorld* world) :Actor(TID_BOULDER, x, y, down, 1.0, 1, world) {
 		Stability = true;
+		ticks = 20;
+		initialchange = false;
 	}
 	bool IsStable();
-	bool IsWaiting();
-	bool IsFalling();
+	bool isBoulder(){
+		return true;
+	}
 	void doSomething();
 private:
 	bool Stability;
-	bool Waiting;
-	bool Falling;
+	int ticks;
+	bool initialchange;
 };
 
 
@@ -155,31 +197,32 @@ private:
 class Barrel :public Actor {
 public:
 	Barrel(int x, int y, StudentWorld* world) : Actor(TID_BARREL, x, y, right, 1.0, 2, world) {};
-	bool InRange();
-	bool PickedUp();
+	bool tooClose(Actor*);
+	void sighted();
+	void doSomething();
 };
 
 class GoldNugget :public Actor {
 public:
-	GoldNugget(int x, int y, bool pickable, bool bribable, bool perminance, StudentWorld* world) :Actor(TID_GOLD, x, y, right, 1.0, 2, world) {
+	GoldNugget(int x, int y, bool pickable,  StudentWorld* world) :Actor(TID_GOLD, x, y, right, 1.0, 2, world) {
 		if (pickable) {
-			this->setVisible(false);
+			setVisible(false);
 			perminance = true;
 		}
-		if (bribable) {
+		if (!pickable) {
+			setVisible(true);
 			perminance = false;
-			ticks = 300;
+			ticks = 150;
 		}
 	}
-	void NearProtestor();
-	void NearTunnelMan();
-	void PickedUp();
-	void TickCount();
+	
+	
+	bool tooClose(Actor*);
+	void sighted();
 	void doSomething();
 
 private:
 	bool pickable;
-	bool bribable;
 	bool perminance;
 	int ticks;
 };
@@ -190,18 +233,21 @@ public:
 		int temp = 300 - 10 * currentlevel;
 		ticks = std::max(100, temp);
 	}
-	void TickCount();
-	void SpawnLocationFind();
-	void doSomething();
-
+	void tickDec();
+	
+	virtual void doSomething() {};
+	int getTicks() {
+		return ticks;
+	}
 private:
 	int ticks;
+	
 
 };
 
 class SonarKit :public Consumable {
 public:
-	SonarKit(int x, int y, int currentlevel, StudentWorld* world) : Consumable(x, y, currentlevel, TID_WATER_POOL, world) {
+	SonarKit(int x, int y, int currentlevel, StudentWorld* world) : Consumable(x, y, currentlevel, TID_SONAR, world) {
 
 	}
 	void doSomething();

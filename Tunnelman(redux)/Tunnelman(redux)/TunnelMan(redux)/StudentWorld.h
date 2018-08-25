@@ -12,6 +12,10 @@ using std::vector;
 class Actor;
 class TunnelMan;
 class Earth;
+class GoldNugget;
+class Barrel;
+class Boulder;
+class Protestor;
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
 class StudentWorld : public GameWorld
@@ -20,7 +24,7 @@ public:
 	StudentWorld(std::string assetDir)
 		: GameWorld(assetDir)
 	{
-
+		ticksFromBegin = 0;
 	}
 
 	// MUST BE COMPLETED
@@ -31,21 +35,36 @@ public:
 	// MUST BE COMPLETED
 	virtual int move();
 
-	void SpawnOilBoulderBarrel(Actor *);
+	void SpawnBoulder(Actor *);
+	void SpawnGoldOil(Actor*);
+	void SpawnConsumable(Actor*);
+	
+	void coordinateGen(int& x, int & b);
+	void coordinateGenEmpty(int& x, int & y);
+
+	int getTicks() const;
+
+	void setTicks(int a);
 
 	void SpawnObject(Actor* a);
 
-
+	void dig();
 	// MUST BE COMPLETED
 	virtual void cleanUp();
 
-	Earth*  getEarth();
+	
 
 
 	string MakeHeader(int health, int water, int gold, int oilleft, int sonars);
 
 
+	vector<Actor*> theList() {
+		return objectlist;
+	}
 
+	TunnelMan* thePlayer() {
+		return player;
+	}
 
 	// We also have access to these coming from GameWorld
 	/*
@@ -59,12 +78,13 @@ public:
 	bool getKey(int& value);
 	void playSound(int soundID);
 	*/
-
+	Earth* earth[64][64];
 private:
 	vector<Actor*> objectlist;
+	
 	TunnelMan* player;
-	Earth* earth[64][64];
-
+	
+	int ticksFromBegin;
 
 
 
